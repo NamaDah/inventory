@@ -1,0 +1,46 @@
+version: '3.8' # Versi Docker Compose
+
+services:
+  server: # Layanan untuk aplikasi Express.js Anda
+    build: . # Membangun image dari Dockerfile di direktori saat ini
+    container_name: inventory-server # Nama container yang mudah dikenali
+    ports:
+      - "5000:5000" # Memetakan port 5000 di host Anda ke port 5000 di container
+    depends_on: # Menentukan bahwa server bergantung pada db dan redis
+      - db
+      - redis
+    # --- PENTING: Memuat variabel lingkungan dari file .env ---
+    env_file:
+      - ./.env
+    # --- AKHIR BAGIAN PENTING ---
+    command: npm start # Perintah yang dijalankan saat container dimulai
+
+    # Opsi tambahan untuk pengembangan (opsional, hapus di produksi)
+    # volumes:
+    #   - .:/usr/src/app # Untuk hot-reloading (jika Anda ingin 'npm run dev' di Docker)
+    #   - /usr/src/app/node_modules # Kecualikan node_modules dari hot-reloading (penting!)
+    # restart: always # Untuk menjaga container tetap berjalan jika crash (untuk produksi)
+
+  db: # Layanan untuk database MySQL Anda
+    image: mysql:8.0 # Menggunakan image MySQL versi 8.0
+    container_name: inventory-mysql # Nama container database
+    ports:
+      - "3307:3306" # Memetakan port 3307 di host ke port 3306 di container
+    environment: # Variabel lingkungan untuk konfigurasi MySQL
+     MYSQL_ROOT_PASSWORD: mysecretpassword
+     MYSQL_DATABASE: inventory_ts
+     MYSQL_USER: ${DB_USERNAME}
+     MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql # Mempertahankan data database bahkan jika container dihapus
+    # command: --default-authentication-plugin=mysql_native_password # Opsional: Jika Anda mengalami masalah autentikasi MySQL 8
+
+  redis: # Layanan untuk server Redis Anda
+    image: redis:latest # Menggunakan image Redis terbaru
+    container_name: inventory-redis # Nama container Redis
+    ports:
+      - "6379:6379" # Memetakan port 6379 di host ke port 6379 di container
+
+# Definisi volume untuk data persisten
+volumes:
+  db_data: # Volume untuk data MySQL

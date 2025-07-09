@@ -2,6 +2,7 @@ import { Response, NextFunction } from "express";
 import prisma from "../prisma";
 import { AuthRequest } from "../interfaces/auth";
 import { BadRequestError, NotFoundError, UnauthorizedError } from "../utils/errors";
+import { Prisma } from "@prisma/client";
 
 export const createOrder = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
@@ -12,7 +13,7 @@ export const createOrder = async (req: AuthRequest, res: Response, next: NextFun
             throw new UnauthorizedError('User not authenticated for order creation.');
         }
 
-        const result = await prisma.$transaction(async (tx) => {
+        const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             let totalOrderAmount = 0;
             const orderItemsToCreate: { productId: number, quantity: number, priceAtOrder: number }[] = [];
 
