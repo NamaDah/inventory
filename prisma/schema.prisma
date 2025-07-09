@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id                   Int       @id @default(autoincrement())
+  email                String    @unique
+  password             String
+  role                 Role      @default(USER)
+  Order                Order[]
+  isVerified           Boolean   @default(false)
+  verificationToken    String?   @unique
+  resetPasswordToken   String?   @unique // Token yang di-hash
+  resetPasswordExpires DateTime? // Waktu kedaluwarsa token
+  createdAt            DateTime  @default(now())
+  updateAt             DateTime  @updatedAt
+
+  @@map("users")
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique @db.VarChar(150)
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updateAt  DateTime  @updatedAt
+
+  @@map("categories") // Maps the model name 'Category' to a table named 'categories'
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  name        String      @db.VarChar(255)
+  description String?     @db.Text
+  price       Decimal     @db.Decimal(10, 2)
+  stock       Int         @default(0)
+  categoryId  Int
+  category    Category    @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+  updateAt    DateTime    @updatedAt
+
+  @@map("products") // Maps the model name 'Product' to a table named 'products'
+}
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  userId      Int
+  user        User        @relation(fields: [userId], references: [id])
+  totalAmount Decimal     @db.Decimal(10, 2)
+  status      OrderStatus @default(PENDING)
+  orderItems  OrderItem[] // Relation to OrderItem
+  createdAt   DateTime    @default(now())
+  updateAt    DateTime    @updatedAt
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id           Int     @id @default(autoincrement())
+  orderId      Int
+  order        Order   @relation(fields: [orderId], references: [id])
+  productId    Int
+  product      Product @relation(fields: [productId], references: [id])
+  quantity     Int     @db.Int
+  priceAtOrder Decimal @db.Decimal(10, 2)
+
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@map("order_items")
+}
