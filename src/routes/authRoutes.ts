@@ -12,6 +12,6 @@ router.post('/login', validate({ body: loginSchema }), login);
 router.post('/forgot-password', validate({ body: forgotPasswordSchema }), forgotPassword);
 router.post('/reset-password', validate({ body: resetPasswordSchema }), resetPassword);
 
-router.get('/verify-email', validate({ body: verifyEmailSchema }), verifyEmail);
+router.get('/verify-email', validate({ query: verifyEmailSchema }), verifyEmail);
 
 export default router;
